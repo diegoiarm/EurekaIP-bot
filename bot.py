@@ -3,6 +3,7 @@ import asyncio
 from commands import *
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler
 from tabulate import tabulate  # Para formatear la tabla
+from config import BOT_TOKEN
 
 # Configuración del logging en consola
 logging.basicConfig(
@@ -11,7 +12,9 @@ logging.basicConfig(
 )
 
 if __name__ == '__main__':
-    application = ApplicationBuilder().token('7168525558:AAE9Lm4XmskUrN6hmr4mqNsZPV0hobv1GHo').build()
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    logging.info("Iniciando configuración del bot...")
 
     # Manejadores de comandos
     application.add_handler(CommandHandler('start', start_command))
@@ -23,6 +26,13 @@ if __name__ == '__main__':
     application.add_handler(CallbackQueryHandler(button_handler))
 
     # Ejecuta el bot
-    logging.info("Starting bot...")
-    asyncio.run(application.run_polling())
+    logging.info("Bot configurado correctamente")
+    logging.info("Comandos registrados: start, language, ipinfo, torrents, threats")
+    logging.info("Iniciando el bot...")
+    
+    try:
+        asyncio.run(application.run_polling())
+        logging.info("¡Bot ejecutándose correctamente!")
+    except Exception as e:
+        logging.error(f"Error al iniciar el bot: {str(e)}")
 

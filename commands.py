@@ -151,7 +151,7 @@ async def torrents_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if context.args:
         imdb_ids = ','.join(context.args)  # Junta varios IMDB IDs en una sola cadena
-        params = {'imdb': imdb_ids, 'key': API_KEY}
+        params = {'imdb': imdb_ids, 'key': CONTENT_API_KEY}
         
         try:
             response = requests.get(CONTENT_API_URL, params=params)
