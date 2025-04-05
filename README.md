@@ -42,19 +42,21 @@ Desde ubicación geográfica, informes de reputación e incluso los torrents má
 
   ```bash
   git clone https://github.com/diegoiarm/eureka-ip-bot.git
-  cd eureka-ip-bot```
-
+  cd eureka-ip-bot
+```
 
 2. Crea un entorno virtual:
 
   ```bash
   python -m venv venv
-  venv\Scripts\activate``` 
+  venv\Scripts\activate
+``` 
 
 3. Instala las dependencias
 
   ```bash
-  pip install -r requirements.txt```
+  pip install -r requirements.txt
+```
 
 4. Configura las variables de entorno. Crea un archivo .env con lo siguiente:
 
@@ -63,12 +65,14 @@ Desde ubicación geográfica, informes de reputación e incluso los torrents má
   IPINFO_ACCESS_TOKEN=xxxx
   IPDATA_API_KEY=xxxx
   CONTENT_API_KEY=xxxx
-  SCRAPER_API_KEY=xxxx```
+  SCRAPER_API_KEY=xxxx
+```
 
 5. Ejecuta el bot:
 
   ```bash
-  python bot.py``` 
+  python bot.py
+``` 
 
 ## Despliegue 🚀
 
