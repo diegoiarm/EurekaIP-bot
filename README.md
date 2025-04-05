@@ -14,7 +14,7 @@ Desde ubicación geográfica, informes de reputación e incluso los torrents má
 ## Funcionalidades 🧩
 
 - **/ipinfo**: Obtiene información detallada sobre una dirección IP usando la API de [IPinfo](https://ipinfo.io/). 🕵️‍♂️
-- **/threatintel**: Proporciona un reporte de amenazas y análisis de IPs utilizando varias fuentes externas. 💡
+- **/threats**: Proporciona un reporte de amenazas y análisis de IPs utilizando varias fuentes externas. 💡
 - **/torrents**: Muestra los torrents más recientes descargados por una IP específica utilizando el servicio [I Know What You Download](https://iknowwhatyoudownload.com/). 📥
 
 ## Tecnologías 🛠️
