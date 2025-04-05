@@ -253,7 +253,7 @@ async def threatintel_command(update: Update, context: ContextTypes.DEFAULT_TYPE
             await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
         if language == 'en':
-            message = "Please provide an IP address to retrieve threat intelligence data.\n\nExample: /threatintel 8.8.8.8"
+            message = "Please provide an IP address to retrieve threat intelligence data.\n\nExample: /threats 8.8.8.8"
         else:  # Español
-            message = "Por favor, proporciona una dirección IP para recuperar el reporte de amenazas.\n\nEjemplo: /threatintel 8.8.8.8"
+            message = "Por favor, proporciona una dirección IP para recuperar el reporte de amenazas.\n\nEjemplo: /threats 8.8.8.8"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
