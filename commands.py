@@ -7,6 +7,8 @@ from config import *
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CallbackContext
 from tabulate import tabulate  # Para formatear la tabla
+from bs4 import BeautifulSoup
+
 
 
 # Diccionario para almacenar las preferencias de idioma por usuario
@@ -145,52 +147,78 @@ async def ipinfo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 # Función para manejar el comando /torrents
+def format_torrent_message(language, ip_address, torrents):
+    header = """"""
+    if language == 'en':
+        header = f"Here are the torrents recently downloaded by {ip_address}:\n"
+    else:  # Default to Spanish
+        header = f"Aquí están los torrents descargados últimamente por {ip_address}:\n"
+
+    return header + "\n".join(torrents)
+
 async def torrents_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    language = user_languages.get(user_id, 'es')  # 'es' como idioma predeterminado
+    language = user_languages.get(user_id, 'es')  # Idioma predeterminado 'es'
 
     if context.args:
-        imdb_ids = ','.join(context.args)  # Junta varios IMDB IDs en una sola cadena
-        params = {'imdb': imdb_ids, 'key': CONTENT_API_KEY}
-        
+        ip_address = context.args[0]
+        url = f"https://iknowwhatyoudownload.com/en/peer/?ip={ip_address}"
+
+        payload = { 
+            'api_key': SCRAPER_API_KEY, 
+            'url': url,
+            'country_code': 'us'
+        }
+
         try:
-            response = requests.get(CONTENT_API_URL, params=params)
-            logging.info("API Response Status Code: %d", response.status_code)  # Imprimir código de estado
-            logging.info("API Response Content: %s", response.text)  # Imprimir contenido de la respuesta
+            # Realiza la solicitud HTTP a ScraperAPI
+            response = requests.get('https://api.scraperapi.com/', params=payload)
+            response.raise_for_status()
+
+            # Parsear el contenido con BeautifulSoup
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            # Buscar la tabla de torrents con la clase correcta
+            torrents_table = soup.find('table', {'class': 'table table-condensed table-striped'})
             
-            if response.status_code == 200:
-                data = response.json()
-                if 'contents' in data and data['contents']:
-                    contents = data['contents']
-                    if language == 'en':
-                        message = "Downloaded torrents by IP:\n\n"
-                        for content in contents:
-                            message += f"Title: {content.get('name', 'N/A')}\n"
-                            message += f"Total Peers: {content.get('totalPeers', 'N/A')}\n\n"
-                    else:  # Español
-                        message = "Torrents descargados por IP:\n\n"
-                        for content in contents:
-                            message += f"Título: {content.get('name', 'N/A')}\n"
-                            message += f"Total de Peers: {content.get('totalPeers', 'N/A')}\n\n"
-                else:
-                    if language == 'en':
-                        message = "No torrent data available for the specified IMDB IDs."
-                    else:  # Español
-                        message = "No hay datos de torrents disponibles para los IMDB IDs especificados."
-            else:
-                message = "Failed to retrieve data from the API. Please try again later."
+            if torrents_table:
+                torrents = []
+                for row in torrents_table.find_all('tr')[1:]:  # Omitir el encabezado
+                    columns = row.find_all('td')
+
+                    if len(columns) >= 5:
+                        first_seen = columns[0].text.strip()
+                        last_seen = columns[1].text.strip()
+                        category = columns[2].text.strip()
+                        title = columns[3].text.strip()
+                        size = columns[4].text.strip()
+
+                        if title and size and first_seen and last_seen:
+                            if language == 'en':
+                                torrents.append(f"\n🎬 {title} ({size}) ({category}) - First seen: {first_seen}, Last seen: {last_seen}")
+                            else:  # Español
+                                torrents.append(f"\n🎬 {title} ({size}) ({category}) - Primera vez visto: {first_seen}, Última vez visto: {last_seen}")
                 
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+                if torrents:
+                    message = format_torrent_message(language, ip_address, torrents)
+                else:
+                    message = "No torrents found for the given IP address." if language == 'en' else "No se encontraron torrents descargados para la IP proporcionada."
+            else:
+                message = "No data available on the page." if language == 'en' else "No se encontraron datos disponibles en la página."
         
-        except Exception as e:
-            logging.error("Error fetching data from API: %s", str(e))
-            await context.bot.send_message(chat_id=update.effective_chat.id, text="An error occurred. Please try again later.")
+        except requests.exceptions.RequestException as e:
+            message = "An error occurred while accessing torrent data. Please try again later." if language == 'en' else "Ocurrió un error al acceder a los datos de torrents. Por favor, inténtalo de nuevo más tarde."
+
     else:
         if language == 'en':
-            message = "Please provide at least one IMDB ID to search for torrents.\n\nExample: /torrents 12345"
-        else:  # Español
-            message = "Por favor, proporciona al menos un ID de IMDB para buscar torrents.\n\nEjemplo: /torrents 12345"
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+            message = "Please provide an IP address to see downloaded torrents.\n\nExample: /torrents 8.8.8.8"
+        else:
+            message = "Por favor, proporciona una dirección IP para ver los torrents descargados.\n\nEjemplo: /torrents 8.8.8.8"
+
+    if not message.strip():
+        message = "Unknown error. Failed to generate the message." if language == 'en' else "Error desconocido. No se pudo generar el mensaje."
+
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 async def threatintel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
@@ -200,7 +228,7 @@ async def threatintel_command(update: Update, context: ContextTypes.DEFAULT_TYPE
         ip_address = context.args[0]
         try:
             response = requests.get(f"https://api.ipdata.co/{ip_address}/threat?api-key={ipdata.api_key}")
-            response.raise_for_status()  # Esto generará una excepción para respuestas con status codes 4xx/5xx
+            response.raise_for_status()  # Esto va a generar una excepción para respuestas con status codes 4xx/5xx
             threat_data = response.json()
 
             # Construir la tabla de resultados con tabulate
